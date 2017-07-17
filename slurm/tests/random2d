@@ -1,0 +1,37 @@
+#!/bin/bash
+
+###########################
+#(C) Will Cunningham 2017 #
+#         DK Lab          #
+# Northeastern University #
+###########################
+
+set -eu -o pipefail
+
+source /home/$USER/.queues
+jobstart=$NEXT_JOB
+samples=1
+partition="krioukov_gpu"
+ncores=$(sinfo -p $partition -o "%c" | awk 'NR==2 {print $1}')
+exclude="compute-4-017"
+
+sweeps=20000
+
+parfile=$1
+readarray -t vars < $parfile
+
+for i in $(seq ${#vars[@]}) ; do
+  job=$(($i+$jobstart-1))
+  var=(${vars[${i}-1]})
+  if [[ ${var:0:1} == "#" ]] ; then
+    continue
+  fi
+
+  n=${var[0]}
+  b=${var[1]}
+  e=${var[2]}
+
+  $EVOLUTION_HOME_DIR/slurm/wrapper/evol_wrp --start $job --ncores $ncores --flags '--nodes '"$n"' --sweeps '"$sweeps"' --beta '"$b"' --epsilon "'$e'" --print' --partition $partition --nsamples $samples --exclude $exclude
+done
+
+setnextjob $(($job+1))

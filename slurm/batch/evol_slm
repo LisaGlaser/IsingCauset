@@ -1,0 +1,46 @@
+#!/bin/bash
+
+#SBATCH -J EVOL-%jobID%
+#SBATCH -o /gss_gpfs_scratch/cunningham/evolution%jobID%/evolution%jobID%.log
+#SBATCH -e /gss_gpfs_scratch/cunningham/evolution%jobID%/evolution%jobID%.err
+#SBATCH -p %partition%
+#SBATCH -N %nnodes%
+#SBATCH -c %ncores%
+#SBATCH --exclusive
+#SBATCH -D /gss_gpfs_scratch/cunningham/evolution%jobID%
+#SBATCH -x %exclude%
+#%waitfor%
+
+###########################
+#(C) Will Cunningham 2017 #
+#         DK Lab          #
+# Northeastern University #
+###########################
+
+homedir=$EVOLUTION_HOME_DIR
+work=/gss_gpfs_scratch/cunningham/evolution%jobID%
+
+cp $homedir/bin/Evolution_%partition% $work/
+$homedir/etc/mkdat $work
+
+# OpenMP environment variables
+export OMP_NUM_THREADS=%ncores%
+export OMP_SCHEDULE="dynamic"
+export OMP_NESTED=FALSE
+export OMP_STACKSIZE="20M"
+
+# Set stack size unlimited
+ulimit -s unlimited
+
+# Run binaries
+for (( i=1; i<=%nsamples%; i++ )) ; do
+  echo "Starting Trial $i of %nsamples%..."
+  if [ %nnodes% -eq 1 ] ; then # Regular run
+    ./Evolution_%partition% %flags% > Evolution_Job-%jobID%_Sample-${i}.log
+  else # Use MPI
+    mpirun -prot -srun ./Evolution_%partition% %flags% > Evolution_Job-%jobID%_Sample-${i}.log
+  fi
+  sleep 1
+done
+
+wait

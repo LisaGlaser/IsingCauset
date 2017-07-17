@@ -1,0 +1,9 @@
+#!/bin/bash
+
+###########################
+#(C) Will Cunningham 2016 #
+#         DK Lab          #
+# Northeastern University #
+###########################
+
+./bin/Evolution_$HOSTNAME --nodes 10 --sweeps 1 --beta 0 --epsilon 0.21

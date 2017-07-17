@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sh ./bootstrap.sh && ./configure "$@" && ./etc/mkdat && make clean && make

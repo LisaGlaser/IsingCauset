@@ -1,0 +1,26 @@
+Requirements:
+  CPU which supports AVX2 (Haswell or beyond)
+   > Check with 'cat /proc/cpuinfo | grep avx2'
+  g++ version 4.8.1 or greater
+   > Check with 'g++ -v'
+  Assembler version 2.24 or greater
+   > Check with 'as --version'
+  GSL version 1.13 or greater
+   > Check with 'rpm -qa gsl' (RedHat) or 'apt-cache policy gsl' (Debian/Ubuntu)
+  Boost version 1.55.0 or greater
+   > Check with 'cat /usr/include/boost/version.hpp'
+
+Install FastMath:
+   > tar -zxvf fastmath.tar.gz -C /home/$USER/projects/fastmath
+   > cd /home/$USER/projects/fastmath
+   > sh ./bootstrap.sh
+   > ./configure --prefix=/home/$USER/release/fastmath
+   > make
+   > make install
+
+Install This Package:
+   > ./install --with-fastmath=/home/$USER/release --with-platform=$HOSTNAME
+
+Run This Package:
+   > ./bin/Evolution_$HOSTNAME -h
+   > ./test

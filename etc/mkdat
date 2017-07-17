@@ -1,0 +1,18 @@
+#!/bin/bash
+
+###########################
+#(C) Will Cunningham 2017 #
+#         DK Lab          #
+# Northeastern University #
+###########################
+
+set -eu -o pipefail
+
+basedir='.'
+if [ "$#" -eq 1 ] ; then
+  basedir=$1
+fi
+
+mkdir -p $basedir/dat
+mkdir -p $basedir/dat/act
+mkdir -p $basedir/dat/int
