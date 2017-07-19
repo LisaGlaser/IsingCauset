@@ -102,6 +102,10 @@ struct Graph {
 	Observables obs;
 	Bitvector adj;				//Adjacency Matrix
 	Bitvector new_adj;			//Updated Adjacency Matrix
+
+	Bitvector link;				//Link Matrix
+	Bitvector new_link;			//Updated Link Matrix
+
 	std::vector<unsigned int> k_in;		//In-Degrees
 	std::vector<unsigned int> k_out;	//Out-Degrees
 };

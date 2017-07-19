@@ -14,5 +14,7 @@ bool measureAction_v2(uint64_t * const cardinalities, double &action, Bitvector 
 bool measureAction_v1(uint64_t * const cardinalities, double &action, const std::vector<unsigned int> U, const std::vector<unsigned int> V, const unsigned int stdim, const int N, const double epsilon);
 
 void updateRelations(Bitvector &new_adj, const std::vector<unsigned int> U, const std::vector<unsigned int> V, const int N);
+void updateLinks(Bitvector &new_adj, Bitvector &new_link, const int N);
 
+void printmatrix(Bitvector &mat, const int N);
 #endif

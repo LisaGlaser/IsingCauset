@@ -160,7 +160,7 @@ Properties parseArgs(int argc, char **argv)
 }
 
 bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
-{	
+{
 	#if UNIT_TEST
 	assert (graph != NULL);
 	assert (mem != NULL);
@@ -197,14 +197,23 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 
 	graph->adj.reserve(graph->props.N);
 	graph->new_adj.reserve(graph->props.N);
+	graph->link.reserve(graph->props.N);
+	graph->new_link.reserve(graph->props.N);
+
 	for (int i = 0; i < graph->props.N; i++) {
 		FastBitset fb(graph->props.N);
 		graph->adj.push_back(fb);
 		graph->new_adj.push_back(fb);
+		graph->link.push_back(fb);
+		graph->new_link.push_back(fb);
 		mem->used += sizeof(BlockType) * fb.getNumBlocks() * 2;
 	}
 
 	updateRelations(graph->adj, graph->props.U, graph->props.V, graph->props.N);
+	updateLinks(graph->adj,graph->link,graph->props.N);
+	/*printmatrix(graph->adj,graph->props.N);
+	printmatrix(graph->link,graph->props.N);*/
+
 
 	try {
 		graph->obs.action_data = (float*)calloc(graph->props.sweeps, sizeof(float));
@@ -215,6 +224,7 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 		fprintf(stderr, "Failed to allocate memory in %s at line %d.\n", __FILE__, __LINE__);
 		return false;
 	}
+	printGraph(graph);
 
 	printf("\tTask Completed.\n");
 	fflush(stdout);
@@ -304,6 +314,11 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 			//Construct the new adjacency matrix
 			//Optimize this later
 			updateRelations(graph->new_adj, graph->props.U, graph->props.V, graph->props.N);
+			updateLinks(graph->new_adj,graph->new_link,graph->props.N);
+			/*std::cout<<"adj"<<std::endl;
+			printmatrix(graph->new_adj,graph->props.N);
+			std::cout<<"link"<<std::endl;
+			printmatrix(graph->new_link,graph->props.N);*/
 
 			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon))
 				return false;

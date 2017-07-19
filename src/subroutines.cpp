@@ -139,6 +139,15 @@ bool measureAction_v1(uint64_t * const cardinalities, double &action, const std:
 	return true;
 }
 
+void printmatrix(Bitvector &mat, const int N)
+{
+
+	for(int i=0; i<N;i++)
+	{
+			mat[i].printBitset();
+	}
+}
+
 void updateRelations(Bitvector &new_adj, const std::vector<unsigned int> U, const std::vector<unsigned int> V, const int N)
 {
 	#if UNIT_TEST
@@ -174,4 +183,35 @@ void updateRelations(Bitvector &new_adj, const std::vector<unsigned int> U, cons
 			//	printf("NOT adding link [%d-%d]\n", i,j);
 		}
 	}
+}
+
+void updateLinks(Bitvector &new_adj,Bitvector &new_link,  const int N)
+{
+	#if UNIT_TEST
+	assert (new_adj.size() > 0);
+	assert (new_link.size() > 0);
+	assert (N > 0);
+	#endif
+
+	for (int i = 0; i < N; i++)
+		new_link[i].reset();
+
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = i + 1; j < N; j++)
+		{
+
+      if (!new_adj[i].read(j)) continue;
+
+        if (!new_adj[i].partial_vecprod(new_adj[j], i, j-i+1))
+				{
+
+            new_link[i].set(j);
+
+            new_link[j].set(i);
+				}
+		}
+	}
+
+
 }
