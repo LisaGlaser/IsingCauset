@@ -38,11 +38,12 @@ Properties parseArgs(int argc, char **argv)
 
 	int c, longIndex;
 	//Single-character options
-	static const char *optString = ":b:e:f:hn:pS:s:v";
+	static const char *optString = ":b:e:j:f:hn:pS:s:v";
 	//Multi-character options
 	static const struct option longOpts[] = {
 		{ "beta",		required_argument,	NULL, 'b' },
 		{ "epsilon",		required_argument,	NULL, 'e' },
+		{ "JIsing",		no_argument,		NULL, 'j' },
 		{ "filename",		required_argument,	NULL, 'f' },
 		{ "help",		no_argument,		NULL, 'h' },
 		{ "nodes",		required_argument,	NULL, 'n' },
@@ -66,6 +67,11 @@ Properties parseArgs(int argc, char **argv)
 				props.epsilon = atof(optarg);
 				if (props.epsilon <= 0.0 || props.epsilon > 1.0)
 					throw CausetException("Invalid argument for '--epsilon' parameter!");
+				break;
+			case 'J':	//Inverse temperature
+				props.Jising = atof(optarg);
+				//if (props.beta <= 0.0 || props.beta >= 1.0)
+				//	throw CausetException("Invalid argument for '--beta' parameter!");
 				break;
 			case 'f':	//Output filename
 				props.filename = std::string(optarg);

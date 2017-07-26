@@ -62,7 +62,7 @@ struct Flags {
 
 
 struct Properties {
-	Properties() : flags(Flags()), N(0), sweeps(0), beta(0.0), epsilon(1.0), seed(12345L), graphID(0), mrng(MersenneRNG()), filename("") {}
+	Properties() : flags(Flags()), N(0), sweeps(0), beta(0.0), epsilon(1.0), Jising(0.0), seed(12345L), graphID(0), mrng(MersenneRNG()), filename("") {}
 
 	Flags flags;
 
@@ -74,6 +74,7 @@ struct Properties {
 
 	double beta;
 	double epsilon;
+	double Jising;
 
 	long seed;
 	int graphID;
@@ -105,6 +106,10 @@ struct Graph {
 
 	Bitvector link;				//Link Matrix
 	Bitvector new_link;			//Updated Link Matrix
+
+	std::vector<unsigned int> spins;  // Ising model spins
+	std::vector<unsigned int> new_spins; //Updated spins
+
 
 	std::vector<unsigned int> k_in;		//In-Degrees
 	std::vector<unsigned int> k_out;	//Out-Degrees
