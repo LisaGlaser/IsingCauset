@@ -43,9 +43,9 @@ Properties parseArgs(int argc, char **argv)
 	static const struct option longOpts[] = {
 		{ "beta",		required_argument,	NULL, 'b' },
 		{ "epsilon",		required_argument,	NULL, 'e' },
-		{ "j_ising",		no_argument,		NULL, 'j' },
 		{ "filename",		required_argument,	NULL, 'f' },
 		{ "help",		no_argument,		NULL, 'h' },
+		{ "j_ising",		required_argument,	NULL, 'j' },
 		{ "nodes",		required_argument,	NULL, 'n' },
 		{ "print",		no_argument,		NULL, 'p' },
 		{ "print-edges",	no_argument,		NULL,  0  },
