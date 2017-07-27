@@ -258,7 +258,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	unsigned int stdim = 2;
 	double dS = 0.0;
 	/// ugly hack but I can just fix how often I want the states printed Out-Degrees
-	int printtimes=1;
+	int printtimes=10;
 
 	try {
 		graph->obs.cardinalities = (uint64_t*)malloc(sizeof(uint64_t) * graph->props.N * omp_get_max_threads());
@@ -351,15 +351,14 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 					graph->new_spins[v]=-1*graph->new_spins[v];
 				}
 			}
-			printvector(graph->spins,graph->props.N);
+			//printvector(graph->spins,graph->props.N);
 		}
-		std::cout<<graph->obs.action;
 		graph->obs.action_data[s] = graph->obs.action;
 		for (int i = 0; i < graph->props.N; i++)
 			data << graph->obs.cardinalities[i] << " ";
 		data << "\n";
 		//printf("sweep [%d] action: %f\n", s, graph->obs.action);
-		if(s%printtimes==0)
+		if(s%(graph->props.sweeps/printtimes)==0)
 		{
 			for(int i=0; i<graph->props.N; i++) myfile<<graph->spins[i]<<" ";
 			myfile<<"\n";
@@ -425,6 +424,7 @@ void destroyGraph(Graph * const graph, size_t &used)
 	graph->new_spins.clear();
 
 	used -= sizeof(unsigned int) * graph->props.N * 2;
+	used -= sizeof(int) * graph->props.N * 2;
 
 	used -= 2 * sizeof(BlockType) * graph->adj[0].getNumBlocks() * graph->props.N;
 	graph->adj.clear();
