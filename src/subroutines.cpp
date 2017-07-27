@@ -17,6 +17,36 @@ void randomTotalOrder(std::vector<unsigned int> &U, const int N)
 	printf(" )\n");*/
 }
 
+void randomSpinState(std::vector<int> &spin, const int N)
+{
+	#if UNIT_TEST
+	assert (N > 0);
+	#endif
+
+	spin.resize(N);
+	for (int i=0; i<N; i++)
+	{
+		spin[i]=rand()%2;
+		if(spin[i]==0) spin[i]=-1;
+	}
+}
+/// this calculates the ising action
+// algorithm is not optimized, but what gives
+bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, const int N, const double J)
+{
+	Iaction=0.;
+	for(int i=0;i<N;i++)
+	{
+		for(int j=i; j<N;j++)
+		{
+
+			Iaction+=J*float(spins[i]*int(link[j].read(i))*spins[j]);
+		}
+	}
+
+	return true;
+}
+
 //Measure Causal Set Action
 //Algorithm has been optimized using minimal bitwise operations
 //Requires the existence of the whole adjacency matrix
@@ -146,6 +176,18 @@ void printmatrix(Bitvector &mat, const int N)
 	{
 			mat[i].printBitset();
 	}
+}
+
+
+void printvector(std::vector<int> &mat, const int N)
+{
+
+	for(int i=0; i<N;i++)
+	{
+			std::cout<<mat[i]<<" ";
+	}
+
+	std::cout<<std::endl;
 }
 
 void updateRelations(Bitvector &new_adj, const std::vector<unsigned int> U, const std::vector<unsigned int> V, const int N)

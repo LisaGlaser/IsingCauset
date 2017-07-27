@@ -74,7 +74,7 @@ struct Properties {
 
 	double beta;
 	double epsilon;
-	double Jising;
+	double Jising=1.0;
 
 	long seed;
 	int graphID;
@@ -85,12 +85,13 @@ struct Properties {
 };
 
 struct Observables {
-	Observables() : k(0.0), cardinalities(NULL), action(0.0), action_data(NULL) {}
+	Observables() : k(0.0), cardinalities(NULL), action(0.0), Iaction(0.0), action_data(NULL) {}
 
 	float k;
 
 	uint64_t *cardinalities;
 	double action;
+	double Iaction;
 
 	float *action_data;
 };
@@ -107,9 +108,8 @@ struct Graph {
 	Bitvector link;				//Link Matrix
 	Bitvector new_link;			//Updated Link Matrix
 
-	std::vector<unsigned int> spins;  // Ising model spins
-	std::vector<unsigned int> new_spins; //Updated spins
-
+	std::vector<int> spins;  // Ising model spins
+	std::vector<int> new_spins; //Updated spins
 
 	std::vector<unsigned int> k_in;		//In-Degrees
 	std::vector<unsigned int> k_out;	//Out-Degrees
