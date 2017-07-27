@@ -94,6 +94,7 @@ struct Observables {
 	double Iaction;
 
 	float *action_data;
+	float *Iaction_data;
 };
 
 struct Graph {

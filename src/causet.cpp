@@ -54,7 +54,7 @@ Properties parseArgs(int argc, char **argv)
 		{ "verbose",		no_argument,		NULL, 'v' },
 		{ NULL,			0,			0,     0  }
 	};
-props.Jising = 0.5;
+props.Jising = 0.0;
 	try {
 		while ((c = getopt_long(argc, argv, optString, longOpts, &longIndex)) != -1) {
 			switch (c) {
@@ -235,6 +235,15 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 		fprintf(stderr, "Failed to allocate memory in %s at line %d.\n", __FILE__, __LINE__);
 		return false;
 	}
+	try {
+		graph->obs.Iaction_data = (float*)calloc(graph->props.sweeps, sizeof(float));
+		if (graph->obs.Iaction_data == NULL)
+			throw std::bad_alloc();
+		mem->used += sizeof(float) * graph->props.sweeps;
+	} catch (std::bad_alloc) {
+		fprintf(stderr, "Failed to allocate memory in %s at line %d.\n", __FILE__, __LINE__);
+		return false;
+	}
 	printGraph(graph);
 
 	printf("\tTask Completed.\n");
@@ -258,7 +267,10 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	unsigned int stdim = 2;
 	double dS = 0.0;
 	/// ugly hack but I can just fix how often I want the states printed Out-Degrees
-	int printtimes=10;
+	int printtimes=100;
+	if(printtimes>graph->props.sweeps) printtimes=graph->props.sweeps;
+
+	graph->obs.Iaction=0;
 
 	try {
 		graph->obs.cardinalities = (uint64_t*)malloc(sizeof(uint64_t) * graph->props.N * omp_get_max_threads());
@@ -281,7 +293,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	}
 
 
-	if (!measureAction_v3(graph->obs.cardinalities, graph->obs.action, graph->adj, workspace, stdim, graph->props.N, graph->props.epsilon)||!IsingAction(graph->spins, graph->obs.Iaction, graph->link, graph->props.N, graph->props.Jising))
+	if (!measureAction_v3(graph->obs.cardinalities, graph->obs.action, graph->adj, workspace, stdim, graph->props.N, graph->props.epsilon)||!(graph->props.Jising!=0.0||IsingAction(graph->spins, graph->obs.Iaction, graph->link, graph->props.N, graph->props.Jising)))
 		return false;
 
 	std::ofstream data;
@@ -319,7 +331,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 			updateRelations(graph->new_adj, graph->props.U, graph->props.V, graph->props.N);
 			updateLinks(graph->new_adj,graph->new_link,graph->props.N);
 
-			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon)||!IsingAction(graph->new_spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising))
+			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon)||!(graph->props.Jising!=0.0||IsingAction(graph->new_spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising)))
 				return false;
 
 			dS = graph->props.beta * (new_action +new_Iaction - graph->obs.action - graph->obs.Iaction);
@@ -335,25 +347,29 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 				W[i] ^= W[j];
 			}
 			// now we do the spin flips, only need to consider changes in spin state then
-			for(int i=0;i<graph->props.N; i++)
+			if(graph->props.Jising!=0.0) // only spinflip if J!=0
 			{
-				/// propose a changed spin state
-				uint64_t v = static_cast<uint64_t>(graph->props.mrng.urng() * graph->props.N);
-				if(v>graph->props.N) std::cout<<"nope not in the vector"<<std::endl;
-				else graph->new_spins[v]=-1*graph->new_spins[v];
-				///calculate action with changed state
-				IsingAction(graph->new_spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising);
-				///accept or reject new state
-				dS = graph->props.beta * (new_Iaction - graph->obs.Iaction);
-				if (dS < 0 || exp(-dS) > graph->props.mrng.urng()) {	//Accept change*/
-					graph->spins[v]=-1*graph->spins[v];
-				} else {	//Reject change
-					graph->new_spins[v]=-1*graph->new_spins[v];
+				for(int i=0;i<graph->props.N; i++)
+				{
+					/// propose a changed spin state
+					uint64_t v = static_cast<uint64_t>(graph->props.mrng.urng() * graph->props.N);
+					if(v>graph->props.N) std::cout<<"nope not in the vector"<<std::endl;
+					else graph->new_spins[v]=-1*graph->new_spins[v];
+					///calculate action with changed state
+					IsingAction(graph->new_spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising);
+					///accept or reject new state
+					dS = graph->props.beta * (new_Iaction - graph->obs.Iaction);
+					if (dS < 0 || exp(-dS) > graph->props.mrng.urng()) {	//Accept change*/
+						graph->spins[v]=-1*graph->spins[v];
+					} else {	//Reject change
+						graph->new_spins[v]=-1*graph->new_spins[v];
+					}
 				}
-			}
+				}
 			//printvector(graph->spins,graph->props.N);
 		}
 		graph->obs.action_data[s] = graph->obs.action;
+		graph->obs.Iaction_data[s] = graph->obs.Iaction;
 		for (int i = 0; i < graph->props.N; i++)
 			data << graph->obs.cardinalities[i] << " ";
 		data << "\n";
@@ -397,7 +413,7 @@ bool printGraph(Graph * const graph)
 	if (!os.is_open())
 		return false;
 	for (int i = 0; i < graph->props.sweeps; i++)
-		os << graph->obs.action_data[i] << "\n";
+		os << graph->obs.action_data[i] <<" "<<graph->obs.Iaction_data[i] << "\n";
 	os.flush();
 	os.close();
 
@@ -445,6 +461,9 @@ void destroyGraph(Graph * const graph, size_t &used)
 
 	free(graph->obs.action_data);
 	graph->obs.action_data = NULL;
+	used -= sizeof(float) * graph->props.sweeps;
+	free(graph->obs.Iaction_data);
+	graph->obs.Iaction_data = NULL;
 	used -= sizeof(float) * graph->props.sweeps;
 
 	return;

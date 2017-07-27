@@ -37,10 +37,9 @@ bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, cons
 	Iaction=0.;
 	for(int i=0;i<N;i++)
 	{
-		for(int j=i; j<N;j++)
+		for(int j=i+1; j<N;j++)
 		{
-
-			Iaction+=J*float(spins[i]*int(link[j].read(i))*spins[j]);
+			if(link[j].read(i)) Iaction+=J*float(spins[i]*spins[j]);
 		}
 	}
 
