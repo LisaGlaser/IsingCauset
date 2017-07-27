@@ -74,7 +74,7 @@ struct Properties {
 
 	double beta;
 	double epsilon;
-	double Jising=1.0;
+	double Jising;
 
 	long seed;
 	int graphID;
@@ -109,8 +109,8 @@ struct Graph {
 	Bitvector link;				//Link Matrix
 	Bitvector new_link;			//Updated Link Matrix
 
-	std::vector<int> spins;  // Ising model spins
-	std::vector<int> new_spins; //Updated spins
+	std::vector<int> spins;			//Ising model spins
+	std::vector<int> new_spins;		//Updated spins
 
 	std::vector<unsigned int> k_in;		//In-Degrees
 	std::vector<unsigned int> k_out;	//Out-Degrees

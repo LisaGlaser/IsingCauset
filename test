@@ -6,4 +6,4 @@
 # Northeastern University #
 ###########################
 
-./bin/Evolution_$HOSTNAME --nodes 10 --sweeps 10 --beta 0 --epsilon 0.21 
+./bin/Evolution_krioukov_gpu --nodes 10 --sweeps 10 --beta 0 --epsilon 0.21 

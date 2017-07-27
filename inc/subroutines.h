@@ -7,7 +7,7 @@
 
 void randomTotalOrder(std::vector<unsigned int> &U, const int N);
 
-void randomSpinState(std::vector<int> &spin, const int N);
+void randomSpinState(std::vector<int> &spin, MersenneRNG &mrng, const int N);
 
 bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, const int N, const double J);
 

@@ -17,31 +17,38 @@ void randomTotalOrder(std::vector<unsigned int> &U, const int N)
 	printf(" )\n");*/
 }
 
-void randomSpinState(std::vector<int> &spin, const int N)
+void randomSpinState(std::vector<int> &spin, MersenneRNG &mrng, const int N)
 {
 	#if UNIT_TEST
 	assert (N > 0);
 	#endif
 
 	spin.resize(N);
-	for (int i=0; i<N; i++)
+	for (int i = 0; i < N; i++)
 	{
-		spin[i]=rand()%2;
-		if(spin[i]==0) spin[i]=-1;
+		//spin[i]=rand()%2;
+		//if(spin[i]==0) spin[i]=-1;
+		spin[i] = (static_cast<int>(mrng.urng() * 2.0) << 1) - 1;
 	}
 }
 /// this calculates the ising action
 // algorithm is not optimized, but what gives
 bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, const int N, const double J)
 {
-	Iaction=0.;
-	for(int i=0;i<N;i++)
-	{
-		for(int j=i+1; j<N;j++)
-		{
-			if(link[j].read(i)) Iaction+=J*float(spins[i]*spins[j]);
-		}
+	#if UNIT_TEST
+	assert (spins.size() > 0);
+	assert (link.size() > 0);
+	assert (N > 0);
+	#endif
+
+	int IA = 0.0;
+	for(int i = 0; i < N; i++) {
+		int si = spins[i];
+		for(int j = i + 1; j < N; j++)
+			if(link[i].read(j))
+				Iaction += si * spins[j];
 	}
+	Iaction = J * static_cast<double>(IA);
 
 	return true;
 }
@@ -52,7 +59,7 @@ bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, cons
 //This will calculate all cardinality intervals by construction
 bool measureAction_v3(uint64_t * const cardinalities, double &action, Bitvector &adj, Bitvector &workspace, const unsigned int stdim, const int N, const double epsilon)
 {
-	#if DEBUG
+	#if UNIT_TEST
 	assert (cardinalities != NULL);
 	assert (adj.size() > 0);
 	assert (stdim >= 2 && stdim <= 4);
@@ -111,7 +118,7 @@ bool measureAction_v3(uint64_t * const cardinalities, double &action, Bitvector 
 
 bool measureAction_v2(uint64_t * const cardinalities, double &action, Bitvector &adj, Bitvector &workspace, const unsigned int stdim, const int N, const double epsilon)
 {
-	#if DEBUG
+	#if UNIT_TEST
 	assert (cardinalities != NULL);
 	assert (adj.size() > 0);
 	assert (stdim >= 2 && stdim <= 4);
@@ -139,7 +146,7 @@ bool measureAction_v2(uint64_t * const cardinalities, double &action, Bitvector 
 
 bool measureAction_v1(uint64_t * const cardinalities, double &action, const std::vector<unsigned int> U, const std::vector<unsigned int> V, const unsigned int stdim, const int N, const double epsilon)
 {
-	#if DEBUG
+	#if UNIT_TEST
 	assert (cardinalities != NULL);
 	assert (stdim >= 2 && stdim <= 4);
 	assert (N > 0);
@@ -170,23 +177,16 @@ bool measureAction_v1(uint64_t * const cardinalities, double &action, const std:
 
 void printmatrix(Bitvector &mat, const int N)
 {
-
-	for(int i=0; i<N;i++)
-	{
-			mat[i].printBitset();
-	}
+	for(int i = 0; i < N; i++)
+		mat[i].printBitset();
 }
 
 
 void printvector(std::vector<int> &mat, const int N)
 {
-
-	for(int i=0; i<N;i++)
-	{
-			std::cout<<mat[i]<<" ";
-	}
-
-	std::cout<<std::endl;
+	for(int i = 0; i < N; i++)
+		std::cout << mat[i] << " ";
+	std::cout << std::endl;
 }
 
 void updateRelations(Bitvector &new_adj, const std::vector<unsigned int> U, const std::vector<unsigned int> V, const int N)
@@ -226,7 +226,7 @@ void updateRelations(Bitvector &new_adj, const std::vector<unsigned int> U, cons
 	}
 }
 
-void updateLinks(Bitvector &new_adj,Bitvector &new_link,  const int N)
+void updateLinks(Bitvector &new_adj, Bitvector &new_link, const int N)
 {
 	#if UNIT_TEST
 	assert (new_adj.size() > 0);
@@ -237,22 +237,16 @@ void updateLinks(Bitvector &new_adj,Bitvector &new_link,  const int N)
 	for (int i = 0; i < N; i++)
 		new_link[i].reset();
 
-	for (int i = 0; i < N; i++)
-	{
-		for (int j = i + 1; j < N; j++)
-		{
+	for (int i = 0; i < N; i++) {
+		for (int j = i + 1; j < N; j++) {
+			//Continue only if two elements are related
+			if (!new_adj[i].read(j)) continue;
 
-      if (!new_adj[i].read(j)) continue;
-
-        if (!new_adj[i].partial_vecprod(new_adj[j], i, j-i+1))
-				{
-
-            new_link[i].set(j);
-
-            new_link[j].set(i);
-				}
+			//Check if their open Alexandroff set is size 0
+			if (!new_adj[i].partial_vecprod(new_adj[j], i, j - i + 1)) {
+				new_link[i].set(j);
+				new_link[j].set(i);
+			}
 		}
 	}
-
-
 }

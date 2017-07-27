@@ -43,7 +43,7 @@ Properties parseArgs(int argc, char **argv)
 	static const struct option longOpts[] = {
 		{ "beta",		required_argument,	NULL, 'b' },
 		{ "epsilon",		required_argument,	NULL, 'e' },
-		{ "JIsing",		no_argument,		NULL, 'j' },
+		{ "j_ising",		no_argument,		NULL, 'j' },
 		{ "filename",		required_argument,	NULL, 'f' },
 		{ "help",		no_argument,		NULL, 'h' },
 		{ "nodes",		required_argument,	NULL, 'n' },
@@ -54,7 +54,7 @@ Properties parseArgs(int argc, char **argv)
 		{ "verbose",		no_argument,		NULL, 'v' },
 		{ NULL,			0,			0,     0  }
 	};
-props.Jising = 0.0;
+
 	try {
 		while ((c = getopt_long(argc, argv, optString, longOpts, &longIndex)) != -1) {
 			switch (c) {
@@ -68,15 +68,13 @@ props.Jising = 0.0;
 				if (props.epsilon <= 0.0 || props.epsilon > 1.0)
 					throw CausetException("Invalid argument for '--epsilon' parameter!");
 				break;
-			case 'J':	//Ising coupling
-				props.Jising = atof(optarg);
-				//if (props.beta <= 0.0 || props.beta >= 1.0)
-				//	throw CausetException("Invalid argument for '--beta' parameter!");
-				break;
 			case 'f':	//Output filename
 				props.filename = std::string(optarg);
 				break;
 			//case 'h' located at the end
+			case 'j':	//Ising coupling
+				props.Jising = atof(optarg);
+				break;
 			case 'n':	//Number of nodes
 				props.N = atoi(optarg);
 				if (props.N <= 0)
@@ -118,6 +116,7 @@ props.Jising = 0.0;
 				printf("  -e, --epsilon\t\tSmearing Parameter\t\t(0, 1]\n");
 				printf("  -f, --filename\tOutput filename\n");
 				printf("  -h, --help\t\tDisplay this menu\n");
+				printf("  -j, --j_ising\t\tIsing coupling\t\t1.0\n");
 				printf("  -n, --nodes\t\tNumber of nodes\t\t\t100\n");
 				printf("  -p, --print\t\tPrint results to file\n");
 				printf("      --print-edges\tPrint edge list to file\n");
@@ -186,16 +185,21 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 
 	//randomTotalOrder(graph->props.U, graph->props.N);
 	//randomTotalOrder(graph->props.V, graph->props.N);
+
 	graph->props.U.resize(graph->props.N);
 	std::iota(graph->props.U.begin(), graph->props.U.end(), 0);
+
 	graph->props.V.resize(graph->props.N);
 	std::iota(graph->props.V.begin(), graph->props.V.end(), 0);
-	graph->spins.resize(graph->props.N);
+
+	randomSpinState(graph->spins, graph->props.mrng, graph->props.N);
+
 	graph->new_spins.resize(graph->props.N);
-	randomSpinState(graph->spins,graph->props.N);
-	for(int i=0;i<graph->props.N;i++)graph->new_spins[i]=graph->spins[i];
+	memcpy(&graph->new_spins[0], &graph->spins[0], sizeof(int) * graph->props.N);
+
 	mem->used += sizeof(unsigned int) * graph->props.N * 2;
 	mem->used += sizeof(int) * graph->props.N *2 ;
+
 	/*printf("U: [ ");
 	for (int i = 0; i < graph->props.N; i++)
 		printf("%d ", graph->props.U[i]);
@@ -208,6 +212,7 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 
 	graph->adj.reserve(graph->props.N);
 	graph->new_adj.reserve(graph->props.N);
+
 	graph->link.reserve(graph->props.N);
 	graph->new_link.reserve(graph->props.N);
 
@@ -217,25 +222,20 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 		graph->new_adj.push_back(fb);
 		graph->link.push_back(fb);
 		graph->new_link.push_back(fb);
-		mem->used += sizeof(BlockType) * fb.getNumBlocks() * 2;
+		mem->used += sizeof(BlockType) * fb.getNumBlocks() * 4;
 	}
 
 	updateRelations(graph->adj, graph->props.U, graph->props.V, graph->props.N);
-	updateLinks(graph->adj,graph->link,graph->props.N);
+	updateLinks(graph->adj, graph->link, graph->props.N);
 	/*printmatrix(graph->adj,graph->props.N);
 	printmatrix(graph->link,graph->props.N);*/
-
 
 	try {
 		graph->obs.action_data = (float*)calloc(graph->props.sweeps, sizeof(float));
 		if (graph->obs.action_data == NULL)
 			throw std::bad_alloc();
 		mem->used += sizeof(float) * graph->props.sweeps;
-	} catch (std::bad_alloc) {
-		fprintf(stderr, "Failed to allocate memory in %s at line %d.\n", __FILE__, __LINE__);
-		return false;
-	}
-	try {
+
 		graph->obs.Iaction_data = (float*)calloc(graph->props.sweeps, sizeof(float));
 		if (graph->obs.Iaction_data == NULL)
 			throw std::bad_alloc();
@@ -244,7 +244,7 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 		fprintf(stderr, "Failed to allocate memory in %s at line %d.\n", __FILE__, __LINE__);
 		return false;
 	}
-	printGraph(graph);
+	//printGraph(graph);
 
 	printf("\tTask Completed.\n");
 	fflush(stdout);
@@ -292,8 +292,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 		return false;
 	}
 
-
-	if (!measureAction_v3(graph->obs.cardinalities, graph->obs.action, graph->adj, workspace, stdim, graph->props.N, graph->props.epsilon)||!(graph->props.Jising!=0.0||IsingAction(graph->spins, graph->obs.Iaction, graph->link, graph->props.N, graph->props.Jising)))
+	//Initialize action values
+	if (!measureAction_v3(graph->obs.cardinalities, graph->obs.action, graph->adj, workspace, stdim, graph->props.N, graph->props.epsilon) || (graph->props.Jising && !IsingAction(graph->spins, graph->obs.Iaction, graph->link, graph->props.N, graph->props.Jising)))
 		return false;
 
 	std::ofstream data;
@@ -320,25 +320,28 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 			j += do_map * (((n >> 1) - j) << 1);
 
 			if (j == graph->props.N) continue;
+
 			// first we do a single graph move, then we do N spin flips
 			//Swap elements at indices i and j in U
 			std::vector<unsigned int> &W = graph->props.mrng.urng() < 0.5 ? graph->props.U : graph->props.V;
 			W[i] ^= W[j];
 			W[j] ^= W[i];
 			W[i] ^= W[j];
+
 			//Construct the new adjacency matrix
 			//Optimize this later
 			updateRelations(graph->new_adj, graph->props.U, graph->props.V, graph->props.N);
-			updateLinks(graph->new_adj,graph->new_link,graph->props.N);
+			updateLinks(graph->new_adj, graph->new_link, graph->props.N);
 
-			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon)||!(graph->props.Jising!=0.0||IsingAction(graph->new_spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising)))
+			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon) || (graph->props.Jising && !IsingAction(graph->new_spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising)))
 				return false;
 
-			dS = graph->props.beta * (new_action +new_Iaction - graph->obs.action - graph->obs.Iaction);
+			dS = graph->props.beta * (new_action + new_Iaction - graph->obs.action - graph->obs.Iaction);
 			if (dS < 0 || exp(-dS) > graph->props.mrng.urng()) {	//Accept change*/
-				for (int m = 0; m < graph->props.N; m++)
-					{graph->new_adj[m].clone(graph->adj[m]);
-					graph->new_link[m].clone(graph->link[m]);}
+				for (int m = 0; m < graph->props.N; m++) {
+					graph->new_adj[m].clone(graph->adj[m]);
+					graph->new_link[m].clone(graph->link[m]);
+				}
 				graph->obs.action = new_action;
 				graph->obs.Iaction = new_Iaction;
 			} else {	//Reject change
@@ -346,36 +349,40 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 				W[j] ^= W[i];
 				W[i] ^= W[j];
 			}
+
 			// now we do the spin flips, only need to consider changes in spin state then
-			if(graph->props.Jising!=0.0) // only spinflip if J!=0
-			{
-				for(int i=0;i<graph->props.N; i++)
-				{
+			if (graph->props.Jising) { // only spinflip if J!=0
+				for(int m = 0; m < graph->props.N; m++) {
 					/// propose a changed spin state
-					uint64_t v = static_cast<uint64_t>(graph->props.mrng.urng() * graph->props.N);
+					/*uint64_t v = static_cast<uint64_t>(graph->props.mrng.urng() * graph->props.N);
 					if(v>graph->props.N) std::cout<<"nope not in the vector"<<std::endl;
-					else graph->new_spins[v]=-1*graph->new_spins[v];
+					else graph->new_spins[v]=-1*graph->new_spins[v];*/
+
+					//Above edited by WJC:
+					unsigned int q = static_cast<int>(graph->props.mrng.urng() * graph->props.N);
+					graph->spins[q] = -graph->spins[q];
+
 					///calculate action with changed state
-					IsingAction(graph->new_spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising);
+					IsingAction(graph->spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising);
 					///accept or reject new state
 					dS = graph->props.beta * (new_Iaction - graph->obs.Iaction);
-					if (dS < 0 || exp(-dS) > graph->props.mrng.urng()) {	//Accept change*/
-						graph->spins[v]=-1*graph->spins[v];
-					} else {	//Reject change
-						graph->new_spins[v]=-1*graph->new_spins[v];
-					}
+					if (dS < 0 || exp(-dS) > graph->props.mrng.urng())	//Accept change*/
+						graph->obs.Iaction = new_Iaction;
+					else	//Reject change
+						graph->spins[q] = -graph->spins[q];
 				}
-				}
+			}
 			//printvector(graph->spins,graph->props.N);
 		}
+
 		graph->obs.action_data[s] = graph->obs.action;
 		graph->obs.Iaction_data[s] = graph->obs.Iaction;
 		for (int i = 0; i < graph->props.N; i++)
 			data << graph->obs.cardinalities[i] << " ";
 		data << "\n";
+
 		//printf("sweep [%d] action: %f\n", s, graph->obs.action);
-		if(s%(graph->props.sweeps/printtimes)==0)
-		{
+		if(!(s%(graph->props.sweeps/printtimes))) {
 			for(int i=0; i<graph->props.N; i++) myfile<<graph->spins[i]<<" ";
 			myfile<<"\n";
 			for(int i=0; i<graph->props.N; i++) myfile<<graph->props.U[i]<<" ";
@@ -436,10 +443,14 @@ void destroyGraph(Graph * const graph, size_t &used)
 	graph->props.V.clear();
 	graph->props.V.swap(graph->props.V);
 
-	graph->spins.clear();
-	graph->new_spins.clear();
-
 	used -= sizeof(unsigned int) * graph->props.N * 2;
+
+	graph->spins.clear();
+	graph->spins.swap(graph->spins);
+
+	graph->new_spins.clear();
+	graph->new_spins.swap(graph->new_spins);
+
 	used -= sizeof(int) * graph->props.N * 2;
 
 	used -= 2 * sizeof(BlockType) * graph->adj[0].getNumBlocks() * graph->props.N;
@@ -449,6 +460,7 @@ void destroyGraph(Graph * const graph, size_t &used)
 	graph->new_adj.clear();
 	graph->new_adj.swap(graph->new_adj);
 
+	used -= 2 * sizeof(BlockType) * graph->link[0].getNumBlocks() * graph->props.N;
 	graph->link.clear();
 	graph->link.swap(graph->link);
 
@@ -462,6 +474,7 @@ void destroyGraph(Graph * const graph, size_t &used)
 	free(graph->obs.action_data);
 	graph->obs.action_data = NULL;
 	used -= sizeof(float) * graph->props.sweeps;
+
 	free(graph->obs.Iaction_data);
 	graph->obs.Iaction_data = NULL;
 	used -= sizeof(float) * graph->props.sweeps;

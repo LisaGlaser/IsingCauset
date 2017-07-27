@@ -10,19 +10,19 @@
 /* define if the compiler supports basic C++11 syntax */
 #define HAVE_CXX11 1
 
-/* Define to 1 if you have the file `inc/causet.h'. */
+/* Define to 1 if you have the file `AC_File'. */
 #define HAVE_INC_CAUSET_H 1
 
-/* Define to 1 if you have the file `inc/constants.h'. */
+/* Define to 1 if you have the file `AC_File'. */
 #define HAVE_INC_CONSTANTS_H 1
 
-/* Define to 1 if you have the file `inc/CuResources.h'. */
+/* Define to 1 if you have the file `AC_File'. */
 #define HAVE_INC_CURESOURCES_H 1
 
-/* Define to 1 if you have the file `inc/operations.h'. */
+/* Define to 1 if you have the file `AC_File'. */
 #define HAVE_INC_OPERATIONS_H 1
 
-/* Define to 1 if you have the file `inc/subroutines.h'. */
+/* Define to 1 if you have the file `AC_File'. */
 #define HAVE_INC_SUBROUTINES_H 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -47,13 +47,13 @@
 /* Define if popcnt instructions are supported */
 #define HAVE_POPCNT_INSTRUCTIONS 1
 
-/* Define to 1 if you have the file `src/causet.cpp'. */
+/* Define to 1 if you have the file `AC_File'. */
 #define HAVE_SRC_CAUSET_CPP 1
 
-/* Define to 1 if you have the file `src/CuResources.cpp'. */
+/* Define to 1 if you have the file `AC_File'. */
 #define HAVE_SRC_CURESOURCES_CPP 1
 
-/* Define to 1 if you have the file `src/subroutines.cpp'. */
+/* Define to 1 if you have the file `AC_File'. */
 #define HAVE_SRC_SUBROUTINES_CPP 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
@@ -91,9 +91,6 @@
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "evolution"
-
-/* Define to the home page for this package. */
-#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "1.0"
