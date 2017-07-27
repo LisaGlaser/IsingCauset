@@ -46,7 +46,7 @@ bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, cons
 		int si = spins[i];
 		for(int j = i + 1; j < N; j++)
 			if(link[i].read(j))
-				Iaction += si * spins[j];
+				IA += si * spins[j];
 	}
 	Iaction = J * static_cast<double>(IA);
 
