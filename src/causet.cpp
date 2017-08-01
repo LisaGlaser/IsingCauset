@@ -183,14 +183,16 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 	printf("\nInitializing Network...\n");
 	fflush(stdout);
 
-	//randomTotalOrder(graph->props.U, graph->props.N);
-	//randomTotalOrder(graph->props.V, graph->props.N);
+	randomTotalOrder(graph->props.U, graph->props.N);
+	randomTotalOrder(graph->props.V, graph->props.N);
 
-	graph->props.U.resize(graph->props.N);
+	// so we are starting from a totally ordered state, no suprise that it falls into a particular trap
+	/*graph->props.U.resize(graph->props.N);
 	std::iota(graph->props.U.begin(), graph->props.U.end(), 0);
 
 	graph->props.V.resize(graph->props.N);
 	std::iota(graph->props.V.begin(), graph->props.V.end(), 0);
+	*/
 
 	randomSpinState(graph->spins, graph->props.mrng, graph->props.N);
 
@@ -267,7 +269,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	unsigned int stdim = 2;
 	double dS = 0.0;
 	/// ugly hack but I can just fix how often I want the states printed Out-Degrees
-	int printtimes=100;
+	int printtimes=10;
 	if(printtimes>graph->props.sweeps) printtimes=graph->props.sweeps;
 
 	graph->obs.Iaction=0;
@@ -344,6 +346,10 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 				}
 				graph->obs.action = new_action;
 				graph->obs.Iaction = new_Iaction;
+				/*std::cout<<"adjoint"<<std::endl;
+				printmatrix(graph->adj,graph->props.N);
+				std::cout<<"link"<<std::endl;
+				printmatrix(graph->link,graph->props.N); */
 			} else {	//Reject change
 				W[i] ^= W[j];
 				W[j] ^= W[i];
@@ -363,7 +369,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 					graph->spins[q] = -graph->spins[q];
 
 					///calculate action with changed state
-					IsingAction(graph->spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising);
+					IsingAction(graph->spins, new_Iaction, graph->link, graph->props.N, graph->props.Jising);
+
 					///accept or reject new state
 					dS = graph->props.beta * (new_Iaction - graph->obs.Iaction);
 					if (dS < 0 || exp(-dS) > graph->props.mrng.urng())	//Accept change*/
@@ -372,6 +379,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 						graph->spins[q] = -graph->spins[q];
 				}
 			}
+
 			//printvector(graph->spins,graph->props.N);
 		}
 

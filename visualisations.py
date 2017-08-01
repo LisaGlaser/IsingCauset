@@ -28,12 +28,12 @@ for i in range(len(data)):
         u.append(data[i])
     else:
         v.append(data[i])
-
+#%%
 for i in range(len(s)):
     plt.axes().set_aspect('equal')
     plt.scatter(u[i],v[i],c=s[i],s=100)
     plt.show()
 
-
-plt.plot(action[100:,0])
-plt.plot(action[100:,1])
+#%%
+plt.plot(action[0:,0])
+plt.plot(action[0:,1])
