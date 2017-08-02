@@ -62,7 +62,7 @@ struct Flags {
 
 
 struct Properties {
-	Properties() : flags(Flags()), N(0), sweeps(0), beta(0.0), epsilon(1.0), Jising(0.0), seed(12345L), graphID(0), mrng(MersenneRNG()), filename("") {}
+	Properties() : flags(Flags()), N(0), sweeps(0), beta(0.0), epsilon(1.0), Jising(0.0), seed(12345L), graphID(0), mrng(MersenneRNG()), filename(""),coldstart(false),printouts(10) {}
 
 	Flags flags;
 
@@ -78,6 +78,9 @@ struct Properties {
 
 	long seed;
 	int graphID;
+
+	bool coldstart;
+	int printouts;
 
 	MersenneRNG mrng;
 
