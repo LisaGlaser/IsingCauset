@@ -38,7 +38,7 @@ Properties parseArgs(int argc, char **argv)
 
 	int c, longIndex;
 	//Single-character options
-	static const char *optString = ":b:e:j:f:hn:pS:s:v";
+	static const char *optString = ":b:e:j:f:hn:pS:s:v:x:i";
 	//Multi-character options
 	static const struct option longOpts[] = {
 		{ "beta",		required_argument,	NULL, 'b' },
@@ -51,6 +51,8 @@ Properties parseArgs(int argc, char **argv)
 		{ "print-edges",	no_argument,		NULL,  0  },
 		{ "seed",		required_argument,	NULL, 's' },
 		{ "sweeps",		required_argument,	NULL, 'S' },
+		{ "states",		required_argument,	NULL, 'x' },
+		{ "coldstart",		no_argument,		NULL, 'i' },
 		{ "verbose",		no_argument,		NULL, 'v' },
 		{ NULL,			0,			0,     0  }
 	};
@@ -88,6 +90,11 @@ Properties parseArgs(int argc, char **argv)
 				if (props.sweeps <= 0)
 					throw CausetException("Invalid argument for '--sweeps' parameter!");
 				break;
+			case 'x':	//Number of printouts of states
+				props.printouts = atoi(optarg);
+				if (props.printouts < 0|| props.printouts> props.sweeps)
+					throw CausetException("Invalid argument for '-printouts' parameter!");
+				break;
 			case 's':	//Random seed
 				props.seed = atol(optarg);
 				if (props.seed <= 0L)
@@ -95,6 +102,9 @@ Properties parseArgs(int argc, char **argv)
 				break;
 			case 'v':	//Verbose output
 				props.flags.verbose = true;
+				break;
+			case 'i':	//Verbose output
+				props.coldstart = true;
 				break;
 			case 0:
 				if (!strcmp("print-edges", longOpts[longIndex].name))
@@ -122,6 +132,8 @@ Properties parseArgs(int argc, char **argv)
 				printf("      --print-edges\tPrint edge list to file\n");
 				printf("  -s, --seed\t\tRandom seed\t\t\t18100\n");
 				printf("  -S, --sweeps\t\tNumber of sweeps\t\t1000\n");
+				printf("	-i, --initial\t\t starts from cold state\n");
+				printf("	-x, --printouts\t\tHow often should the state be printed?\n");
 				printf("  -v, --verbose\t\tVerbose output\n");
 				printf("\n");
 
@@ -166,6 +178,7 @@ Properties parseArgs(int argc, char **argv)
 
 bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 {
+
 	#if UNIT_TEST
 	assert (graph != NULL);
 	assert (mem != NULL);
@@ -183,18 +196,25 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 	printf("\nInitializing Network...\n");
 	fflush(stdout);
 
-	randomTotalOrder(graph->props.U, graph->props.N);
-	randomTotalOrder(graph->props.V, graph->props.N);
 
-	// so we are starting from a totally ordered state, no suprise that it falls into a particular trap
-	/*graph->props.U.resize(graph->props.N);
+	// hot or cold start?
+	if(graph->props.coldstart)
+	{graph->props.U.resize(graph->props.N);
 	std::iota(graph->props.U.begin(), graph->props.U.end(), 0);
 
 	graph->props.V.resize(graph->props.N);
 	std::iota(graph->props.V.begin(), graph->props.V.end(), 0);
-	*/
 
-	randomSpinState(graph->spins, graph->props.mrng, graph->props.N);
+	graph->spins=std::vector<int>(graph->props.N,1);
+
+	}
+	else
+	{
+		randomSpinState(graph->spins, graph->props.mrng, graph->props.N);
+		randomTotalOrder(graph->props.U, graph->props.N);
+		randomTotalOrder(graph->props.V, graph->props.N);
+
+	}
 
 	graph->new_spins.resize(graph->props.N);
 	memcpy(&graph->new_spins[0], &graph->spins[0], sizeof(int) * graph->props.N);
@@ -269,9 +289,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	unsigned int stdim = 2;
 	double dS = 0.0;
 	int accepted=0;
+	int acceptedI=0;
 	/// ugly hack but I can just fix how often I want the states printed Out-Degrees
-	int printtimes=10;
-	if(printtimes>graph->props.sweeps) printtimes=graph->props.sweeps;
 
 	graph->obs.Iaction=0;
 
@@ -357,7 +376,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 				W[j] ^= W[i];
 				W[i] ^= W[j];
 			}
-
+		}
 			// now we do the spin flips, only need to consider changes in spin state then
 			if (graph->props.Jising) { // only spinflip if J!=0
 				for(int m = 0; m < graph->props.N; m++) {
@@ -375,15 +394,16 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 
 					///accept or reject new state
 					dS = graph->props.beta * (new_Iaction - graph->obs.Iaction);
-					if (dS < 0 || exp(-dS) > graph->props.mrng.urng())	//Accept change*/
-						graph->obs.Iaction = new_Iaction;
+					if (dS < 0 || exp(-dS) > graph->props.mrng.urng()){	//Accept change*/
+						acceptedI++;
+						graph->obs.Iaction = new_Iaction;}
 					else	//Reject change
 						graph->spins[q] = -graph->spins[q];
 				}
 			}
 
 			//printvector(graph->spins,graph->props.N);
-		}
+
 
 		graph->obs.action_data[s] = graph->obs.action;
 		graph->obs.Iaction_data[s] = graph->obs.Iaction;
@@ -392,7 +412,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 		data << "\n";
 
 		//printf("sweep [%d] action: %f\n", s, graph->obs.action);
-		if(!(s%(graph->props.sweeps/printtimes))) {
+		if(graph->props.printouts!=0&&!(s%(graph->props.sweeps/graph->props.printouts))) {
 			for(int i=0; i<graph->props.N; i++) myfile<<graph->spins[i]<<" ";
 			myfile<<"\n";
 			for(int i=0; i<graph->props.N; i++) myfile<<graph->props.U[i]<<" ";
@@ -401,6 +421,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 			myfile<<"\n";
 		}
 	}
+
 	data.flush();
 	data.close();
 
@@ -410,7 +431,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	workspace.swap(workspace);
 
 	printf("\tTask Completed.\n");
-	printf("\tWe accepted %d moves\n",accepted);
+	printf("\tWe accepted %d causet moves of %lu attempted moves\n",accepted,graph->props.sweeps*npairs);
+	printf("\tWe accepted %d ising moves of %d attempted moves\n",acceptedI,(graph->props.sweeps)*(graph->props.N));
 	fflush(stdout);
 
 	return true;
