@@ -268,6 +268,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	uint64_t clone_length = graph->adj[0].getNumBlocks();
 	unsigned int stdim = 2;
 	double dS = 0.0;
+	int accepted=0;
 	/// ugly hack but I can just fix how often I want the states printed Out-Degrees
 	int printtimes=10;
 	if(printtimes>graph->props.sweeps) printtimes=graph->props.sweeps;
@@ -339,7 +340,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 				return false;
 
 			dS = graph->props.beta * (new_action + new_Iaction - graph->obs.action - graph->obs.Iaction);
-			if (dS < 0 || exp(-dS) > graph->props.mrng.urng()) {	//Accept change*/
+			if (dS < 0 || exp(-dS) > graph->props.mrng.urng()) {
+				accepted++;	//Accept change*/
 				for (int m = 0; m < graph->props.N; m++) {
 					graph->new_adj[m].clone(graph->adj[m]);
 					graph->new_link[m].clone(graph->link[m]);
@@ -408,6 +410,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	workspace.swap(workspace);
 
 	printf("\tTask Completed.\n");
+	printf("\tWe accepted %d moves\n",accepted);
 	fflush(stdout);
 
 	return true;
