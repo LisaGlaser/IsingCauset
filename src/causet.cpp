@@ -38,7 +38,7 @@ Properties parseArgs(int argc, char **argv)
 
 	int c, longIndex;
 	//Single-character options
-	static const char *optString = ":b:e:j:f:hn:pS:s:v:x:i";
+	static const char *optString = ":b:e:j:f:hn:pS:s:v:x:i:q";
 	//Multi-character options
 	static const struct option longOpts[] = {
 		{ "beta",		required_argument,	NULL, 'b' },
@@ -54,6 +54,7 @@ Properties parseArgs(int argc, char **argv)
 		{ "states",		required_argument,	NULL, 'x' },
 		{ "coldstart",		no_argument,		NULL, 'i' },
 		{ "verbose",		no_argument,		NULL, 'v' },
+		{ "spinflips",		required_argument,		NULL, 'q' },
 		{ NULL,			0,			0,     0  }
 	};
 
@@ -90,6 +91,8 @@ Properties parseArgs(int argc, char **argv)
 				if (props.sweeps <= 0)
 					throw CausetException("Invalid argument for '--sweeps' parameter!");
 				break;
+			case 'q':	//Number of spinflips per sweep
+				props.spinflips = atoi(optarg);
 			case 'x':	//Number of printouts of states
 				props.printouts = atoi(optarg);
 				if (props.printouts < 0|| props.printouts> props.sweeps)
@@ -134,6 +137,7 @@ Properties parseArgs(int argc, char **argv)
 				printf("  -S, --sweeps\t\tNumber of sweeps\t\t1000\n");
 				printf("	-i, --initial\t\t starts from cold state\n");
 				printf("	-x, --printouts\t\tHow often should the state be printed?\n");
+				printf("	-q, --spinflips\t\tNumber of attempted spin flips per sweep\n");
 				printf("  -v, --verbose\t\tVerbose output\n");
 				printf("\n");
 
@@ -290,6 +294,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	double dS = 0.0;
 	int accepted=0;
 	int acceptedI=0;
+	int spinflips=graph->props.spinflips;
+
 	/// ugly hack but I can just fix how often I want the states printed Out-Degrees
 
 	graph->obs.Iaction=0;
@@ -331,6 +337,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	if (!data.is_open())
 		return false;
 	for (int s = 0; s < graph->props.sweeps; s++) {
+		if(graph->props.spinflips<0) spinflips=s%graph->props.spinflips;
 		for (uint64_t k = 0; k < npairs; k++) {
 			//Pick a random pair in U
 			uint64_t v = static_cast<uint64_t>(graph->props.mrng.urng() * (np - 1)) + 1;
@@ -379,7 +386,9 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 		}
 			// now we do the spin flips, only need to consider changes in spin state then
 			if (graph->props.Jising) { // only spinflip if J!=0
-				for(int m = 0; m < graph->props.N; m++) {
+			// quick hack, I want to try different spinflip numbers
+
+				for(int m = 0; m < spinflips; m++) {
 					/// propose a changed spin state
 					/*uint64_t v = static_cast<uint64_t>(graph->props.mrng.urng() * graph->props.N);
 					if(v>graph->props.N) std::cout<<"nope not in the vector"<<std::endl;
@@ -429,10 +438,12 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	mem->used -= sizeof(BlockType) * clone_length * omp_get_max_threads();
 	workspace.clear();
 	workspace.swap(workspace);
-
+	double fspinflips=(float)graph->props.spinflips;
+	printf(" %d \n",graph->props.spinflips);
+	if(fspinflips<0) fspinflips=1./fspinflips;
 	printf("\tTask Completed.\n");
 	printf("\tWe accepted %d causet moves of %lu attempted moves\n",accepted,graph->props.sweeps*npairs);
-	printf("\tWe accepted %d ising moves of %d attempted moves\n",acceptedI,(graph->props.sweeps)*(graph->props.N));
+	printf("\tWe accepted %d ising moves of %0.0f attempted moves\n",acceptedI,(graph->props.sweeps)*(fspinflips));
 	fflush(stdout);
 
 	return true;
