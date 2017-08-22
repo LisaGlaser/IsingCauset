@@ -81,7 +81,7 @@ Properties parseArgs(int argc, char **argv)
 			case 'n':	//Number of nodes
 				props.N = atoi(optarg);
 				if (props.N <= 0)
-					throw CausetException("Invalid argument for '--nodes' parameter!");
+					throw CausetException("Invalid argument for '--nodes' parameter! ");
 				break;
 			case 'p':	//Print simulation results to file
 				props.flags.print = true;
@@ -129,7 +129,7 @@ Properties parseArgs(int argc, char **argv)
 				printf("  -e, --epsilon\t\tSmearing Parameter\t\t(0, 1]\n");
 				printf("  -f, --filename\tOutput filename\n");
 				printf("  -h, --help\t\tDisplay this menu\n");
-				printf("  -j, --j_ising\t\tIsing coupling\t\t1.0\n");
+				printf("  -j, --j_ising\t\tIsing coupling\t\t1.0\n ");
 				printf("  -n, --nodes\t\tNumber of nodes\t\t\t100\n");
 				printf("  -p, --print\t\tPrint results to file\n");
 				printf("      --print-edges\tPrint edge list to file\n");
@@ -138,7 +138,7 @@ Properties parseArgs(int argc, char **argv)
 				printf("	-i, --initial\t\t starts from cold state\n");
 				printf("	-x, --printouts\t\tHow often should the state be printed?\n");
 				printf("	-q, --spinflips\t\tNumber of attempted spin flips per sweep\n");
-				printf("  -v, --verbose\t\tVerbose output\n");
+				printf("  -v, --verbose\t\t Verbose output\n");
 				printf("\n");
 
 				printf("Report bugs to w.cunningham@northeastern.edu\n");
