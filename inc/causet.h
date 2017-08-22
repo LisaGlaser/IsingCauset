@@ -80,12 +80,13 @@ struct Properties {
 	long seed;
 	int graphID;
 
+	MersenneRNG mrng;
+
 	std::string filename;
 
 	bool coldstart;
 	int printouts;
 
-	MersenneRNG mrng;
 
 	int spinflips;
 

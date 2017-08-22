@@ -220,11 +220,8 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 
 	}
 
-	graph->new_spins.resize(graph->props.N);
-	memcpy(&graph->new_spins[0], &graph->spins[0], sizeof(int) * graph->props.N);
-
 	mem->used += sizeof(unsigned int) * graph->props.N * 2;
-	mem->used += sizeof(int) * graph->props.N *2 ;
+	mem->used += sizeof(int) * graph->props.N ;
 
 	/*printf("U: [ ");
 	for (int i = 0; i < graph->props.N; i++)
@@ -492,24 +489,24 @@ void destroyGraph(Graph * const graph, size_t &used)
 	graph->spins.clear();
 	graph->spins.swap(graph->spins);
 
-	graph->new_spins.clear();
-	graph->new_spins.swap(graph->new_spins);
+	used -= sizeof(int) * graph->props.N;
 
-	used -= sizeof(int) * graph->props.N * 2;
 
-	used -= 2 * sizeof(BlockType) * graph->adj[0].getNumBlocks() * graph->props.N;
 	graph->adj.clear();
 	graph->adj.swap(graph->adj);
 
 	graph->new_adj.clear();
 	graph->new_adj.swap(graph->new_adj);
 
-	used -= 2 * sizeof(BlockType) * graph->link[0].getNumBlocks() * graph->props.N;
+	used -= 2 * sizeof(BlockType) * graph->adj[0].getNumBlocks() * graph->props.N;
+
 	graph->link.clear();
 	graph->link.swap(graph->link);
 
 	graph->new_link.clear();
 	graph->new_link.swap(graph->new_link);
+
+	used -= 2 * sizeof(BlockType) * graph->link[0].getNumBlocks() * graph->props.N;
 
 	free(graph->obs.cardinalities);
 	graph->obs.cardinalities = NULL;
