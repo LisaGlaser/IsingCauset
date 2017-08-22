@@ -362,7 +362,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 			updateRelations(graph->new_adj, graph->props.U, graph->props.V, graph->props.N);
 			updateLinks(graph->new_adj, graph->new_link, graph->props.N);
 
-			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon) || (graph->props.Jising && !IsingAction(graph->new_spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising)))
+			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon) || (graph->props.Jising && !IsingAction(graph->spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising)))
 				return false;
 
 			dS = graph->props.beta * (new_action + new_Iaction - graph->obs.action - graph->obs.Iaction);

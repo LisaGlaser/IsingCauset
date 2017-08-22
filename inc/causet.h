@@ -48,7 +48,7 @@ struct Memory {
 
 	size_t used;
 	size_t max;
-	
+
 };
 
 struct Flags {
@@ -80,12 +80,13 @@ struct Properties {
 	long seed;
 	int graphID;
 
+	std::string filename;
+
 	bool coldstart;
 	int printouts;
 
 	MersenneRNG mrng;
 
-	std::string filename;
 	int spinflips;
 
 };
@@ -115,8 +116,7 @@ struct Graph {
 	Bitvector link;				//Link Matrix
 	Bitvector new_link;			//Updated Link Matrix
 
-	std::vector<int> spins;			//Ising model spins
-	std::vector<int> new_spins;		//Updated spins
+	std::vector<int> spins;			//Ising model spins // no need for new spins!
 
 	std::vector<unsigned int> k_in;		//In-Degrees
 	std::vector<unsigned int> k_out;	//Out-Degrees
