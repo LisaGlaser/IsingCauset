@@ -290,7 +290,6 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	double dS = 0.0;
 	int accepted=0;
 	int acceptedI=0;
-	int spinflips=graph->props.spinflips;
 
 	/// ugly hack but I can just fix how often I want the states printed Out-Degrees
 
@@ -333,7 +332,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	if (!data.is_open())
 		return false;
 	for (int s = 0; s < graph->props.sweeps; s++) {
-		if(graph->props.spinflips<0) spinflips=s%graph->props.spinflips;
+
 		for (uint64_t k = 0; k < npairs; k++) {
 			//Pick a random pair in U
 			uint64_t v = static_cast<uint64_t>(graph->props.mrng.urng() * (np - 1)) + 1;
@@ -384,13 +383,9 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 			if (graph->props.Jising) { // only spinflip if J!=0
 			// quick hack, I want to try different spinflip numbers
 
-				for(int m = 0; m < spinflips; m++) {
+				for(int m = 0; m < graph->props.spinflips; m++) {
 					/// propose a changed spin state
-					/*uint64_t v = static_cast<uint64_t>(graph->props.mrng.urng() * graph->props.N);
-					if(v>graph->props.N) std::cout<<"nope not in the vector"<<std::endl;
-					else graph->new_spins[v]=-1*graph->new_spins[v];*/
 
-					//Above edited by WJC:
 					unsigned int q = static_cast<int>(graph->props.mrng.urng() * graph->props.N);
 					graph->spins[q] = -graph->spins[q];
 
