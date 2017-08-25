@@ -266,6 +266,7 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 		fprintf(stderr, "Failed to allocate memory in %s at line %d.\n", __FILE__, __LINE__);
 		return false;
 	}
+
 	//printGraph(graph);
 
 	printf("\tTask Completed.\n");
@@ -427,10 +428,11 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 
 	//Free Workspace
 	mem->used -= sizeof(BlockType) * clone_length * omp_get_max_threads();
+
 	workspace.clear();
 	workspace.swap(workspace);
 	double fspinflips=(float)graph->props.spinflips;
-	printf(" %d \n",graph->props.spinflips);
+	printf("Spinflips per sweep %d \n",graph->props.spinflips);
 	if(fspinflips<0) fspinflips=1./fspinflips;
 	printf("\tTask Completed.\n");
 	printf("\tWe accepted %d causet moves of %lu attempted moves\n",accepted,graph->props.sweeps*npairs);
@@ -485,6 +487,8 @@ void destroyGraph(Graph * const graph, size_t &used)
 
 	used -= sizeof(int) * graph->props.N;
 
+/// these need to be above the removal of the data
+	used -= 2 * sizeof(BlockType) * graph->adj[0].getNumBlocks() * graph->props.N;
 
 	graph->adj.clear();
 	graph->adj.swap(graph->adj);
@@ -492,15 +496,14 @@ void destroyGraph(Graph * const graph, size_t &used)
 	graph->new_adj.clear();
 	graph->new_adj.swap(graph->new_adj);
 
-	used -= 2 * sizeof(BlockType) * graph->adj[0].getNumBlocks() * graph->props.N;
+/// these need to be above the removal of the data
+	used -= 2 * sizeof(BlockType) * graph->link[0].getNumBlocks() * graph->props.N;
 
 	graph->link.clear();
 	graph->link.swap(graph->link);
 
 	graph->new_link.clear();
 	graph->new_link.swap(graph->new_link);
-
-	used -= 2 * sizeof(BlockType) * graph->link[0].getNumBlocks() * graph->props.N;
 
 	free(graph->obs.cardinalities);
 	graph->obs.cardinalities = NULL;
