@@ -4,7 +4,9 @@
 #include "causet.h"
 #include "operations.h"
 #include "CuResources.h"
+#include <iterator>
 
+void initialState(Graph * const graph);
 void randomTotalOrder(std::vector<unsigned int> &U, const int N);
 
 void randomSpinState(std::vector<int> &spin, MersenneRNG &mrng, const int N);
@@ -22,4 +24,5 @@ void updateLinks(Bitvector &new_adj, Bitvector &new_link, const int N);
 
 void printmatrix(Bitvector &mat, const int N);
 void printvector(std::vector<int> &mat, const int N);
+void uprintvector(std::vector<unsigned int> &mat, const int N);
 #endif

@@ -52,7 +52,7 @@ Properties parseArgs(int argc, char **argv)
 		{ "seed",		required_argument,	NULL, 's' },
 		{ "sweeps",		required_argument,	NULL, 'S' },
 		{ "states",		required_argument,	NULL, 'x' },
-		{ "coldstart",		no_argument,		NULL, 'i' },
+		{ "initialstate",		required_argument,		NULL, 'i' },
 		{ "verbose",		no_argument,		NULL, 'v' },
 		{ "spinflips",		required_argument,		NULL, 'q' },
 		{ NULL,			0,			0,     0  }
@@ -106,9 +106,9 @@ Properties parseArgs(int argc, char **argv)
 			case 'v':	//Verbose output
 				props.flags.verbose = true;
 				break;
-			case 'i':	//Verbose output
-				props.coldstart = true;
-				break;
+			case 'i':	//startingConf
+			props.initialstate = std::string(optarg);
+			break;
 			case 0:
 				if (!strcmp("print-edges", longOpts[longIndex].name))
 					//Print edge list to file
@@ -202,22 +202,9 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 
 
 	// hot or cold start?
-	if(graph->props.coldstart)
-	{
-		graph->props.U.resize(graph->props.N);
-		std::iota(graph->props.U.begin(), graph->props.U.end(), 0);
 
-		graph->props.V.resize(graph->props.N);
-		std::iota(graph->props.V.begin(), graph->props.V.end(), 0);
 
-		graph->spins=std::vector<int>(graph->props.N,1);
-	}
-	else
-	{
-		randomSpinState(graph->spins, graph->props.mrng, graph->props.N);
-		randomTotalOrder(graph->props.U, graph->props.N);
-		randomTotalOrder(graph->props.V, graph->props.N);
-	}
+	initialState(graph);
 
 	mem->used += sizeof(unsigned int) * graph->props.N * 2;
 	mem->used += sizeof(int) * graph->props.N ;

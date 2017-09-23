@@ -17,6 +17,52 @@ void randomTotalOrder(std::vector<unsigned int> &U, const int N)
 	printf(" )\n");*/
 }
 
+void initialState(Graph * const graph)
+{
+
+	if(graph->props.initialstate=="cold")
+	{
+		graph->props.U.resize(graph->props.N);
+		std::iota(graph->props.U.begin(), graph->props.U.end(), 0);
+
+		graph->props.V.resize(graph->props.N);
+		std::iota(graph->props.V.begin(), graph->props.V.end(), 0);
+
+		graph->spins=std::vector<int>(graph->props.N,1);
+	}
+	else if(graph->props.initialstate=="random")
+	{
+		randomSpinState(graph->spins, graph->props.mrng, graph->props.N);
+		randomTotalOrder(graph->props.U, graph->props.N);
+		randomTotalOrder(graph->props.V, graph->props.N);
+	}
+	else
+	{
+		std::ifstream file(graph->props.initialstate);
+    std::string str;
+		// first line is the spinstate
+		std::getline(file, str);
+		//std::cout<<str<<std::endl;
+		std::stringstream ss( str);
+		std::copy( std::istream_iterator<int>( ss), std::istream_iterator<int>(),
+		                                                   std::back_inserter(graph->spins));
+
+		//printvector(graph->spins,graph->props.N);
+		// second line are u coordiantes
+
+		std::getline(file, str);
+		std::copy( std::istream_iterator<unsigned int>( ss), std::istream_iterator<unsigned int>(),
+		                                                   std::back_inserter(graph->props.U));
+		uprintvector( graph->props.U,graph->props.N);
+// third line are v coordiantes
+		std::getline(file, str);
+		std::copy( std::istream_iterator<unsigned int>( ss), std::istream_iterator<unsigned int>(),
+																											 std::back_inserter(graph->props.V));
+
+	}
+
+}
+
 void randomSpinState(std::vector<int> &spin, MersenneRNG &mrng, const int N)
 {
 	#if UNIT_TEST
@@ -31,6 +77,7 @@ void randomSpinState(std::vector<int> &spin, MersenneRNG &mrng, const int N)
 		spin[i] = (static_cast<int>(mrng.urng() * 2.0) << 1) - 1;
 	}
 }
+
 /// this calculates the ising action
 // algorithm is not optimized, but what gives
 bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, const int N, const double J)
@@ -183,6 +230,12 @@ void printmatrix(Bitvector &mat, const int N)
 
 
 void printvector(std::vector<int> &mat, const int N)
+{
+	for(int i = 0; i < N; i++)
+		std::cout << mat[i] << " ";
+	std::cout << std::endl;
+}
+void uprintvector(std::vector<unsigned int> &mat, const int N)
 {
 	for(int i = 0; i < N; i++)
 		std::cout << mat[i] << " ";
