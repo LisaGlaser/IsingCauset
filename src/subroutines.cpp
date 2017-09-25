@@ -1,5 +1,48 @@
 #include "subroutines.h"
 
+// Our special 'read a line as a vector' object
+template <typename T>
+struct linevector_t: public std::vector <T> { };
+
+// Cast function (mutable object)
+template <typename T>
+linevector_t <T> &
+linevector( std::vector <T> & v )
+  {
+  return static_cast <linevector_t <T> &> ( v );
+  }
+// Cast functions (const object)
+
+template <typename T>
+const linevector_t <T> &
+
+linevector( const std::vector <T> & v )
+  {
+  return static_cast <const linevector_t <T> &> ( v );
+  }
+
+// Input operation to read a single line into a vector <T>
+template <typename T>
+std::istream& operator >> ( std::istream& ins, linevector_t <T> & v )
+  {
+  std::string s;
+  std::getline( ins, s );
+  std::istringstream iss( s );
+  v.clear();
+  copy( std::istream_iterator <T> ( iss ), std::istream_iterator <T> (), std::back_inserter( v ) );
+  return ins;
+  }
+
+// Something useful for our example program
+template <typename T>
+std::ostream& operator << ( std::ostream& outs, const linevector_t <T> & v )
+  {
+  copy( v.begin(), v.end() - 1, std::ostream_iterator <T> ( outs, " " ) );
+  return outs << v.back() << std::endl;
+  }
+
+
+
 //Generate random total order for vector U
 void randomTotalOrder(std::vector<unsigned int> &U, const int N)
 {
@@ -38,27 +81,14 @@ void initialState(Graph * const graph)
 	}
 	else
 	{
-		std::ifstream file(graph->props.initialstate);
-    std::string str;
-		// first line is the spinstate
-		std::getline(file, str);
-		//std::cout<<str<<std::endl;
-		std::stringstream ss( str);
-		std::copy( std::istream_iterator<int>( ss), std::istream_iterator<int>(),
-		                                                   std::back_inserter(graph->spins));
-
-		//printvector(graph->spins,graph->props.N);
-		// second line are u coordiantes
-
-		std::getline(file, str);
-		std::copy( std::istream_iterator<unsigned int>( ss), std::istream_iterator<unsigned int>(),
-		                                                   std::back_inserter(graph->props.U));
-		uprintvector( graph->props.U,graph->props.N);
-// third line are v coordiantes
-		std::getline(file, str);
-		std::copy( std::istream_iterator<unsigned int>( ss), std::istream_iterator<unsigned int>(),
-																											 std::back_inserter(graph->props.V));
-
+		std::ifstream f(graph->props.initialstate);
+		f >> linevector( graph->spins );
+  	f >> linevector( graph->props.U );
+  	f >> linevector( graph->props.V );
+  	f.close();
+		/*printvector(graph->spins,graph->props.N);
+		uprintvector(graph->props.U,graph->props.N);
+		uprintvector(graph->props.V,graph->props.N);*/
 	}
 
 }
