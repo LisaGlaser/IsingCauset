@@ -1,5 +1,6 @@
 #include "subroutines.h"
 
+// found this here: http://www.cplusplus.com/forum/general/33606/
 // Our special 'read a line as a vector' object
 template <typename T>
 struct linevector_t: public std::vector <T> { };
@@ -63,7 +64,7 @@ void randomTotalOrder(std::vector<unsigned int> &U, const int N)
 void initialState(Graph * const graph)
 {
 
-	if(graph->props.initialstate=="cold")
+	if(!graph->props.initialstate.compare("cold"))
 	{
 		graph->props.U.resize(graph->props.N);
 		std::iota(graph->props.U.begin(), graph->props.U.end(), 0);
@@ -72,12 +73,19 @@ void initialState(Graph * const graph)
 		std::iota(graph->props.V.begin(), graph->props.V.end(), 0);
 
 		graph->spins=std::vector<int>(graph->props.N,1);
+    printf("starting in a cold state \n");
 	}
-	else if(graph->props.initialstate=="random")
+	else if(!graph->props.initialstate.compare("random"))
 	{
+    graph->spins.resize(graph->props.N);
+    graph->props.U.resize(graph->props.N);
+    graph->props.V.resize(graph->props.N);
+
 		randomSpinState(graph->spins, graph->props.mrng, graph->props.N);
 		randomTotalOrder(graph->props.U, graph->props.N);
 		randomTotalOrder(graph->props.V, graph->props.N);
+    printf("starting in a random state \n");
+
 	}
 	else
 	{
@@ -86,6 +94,8 @@ void initialState(Graph * const graph)
   	f >> linevector( graph->props.U );
   	f >> linevector( graph->props.V );
   	f.close();
+    printf("starting from %s", graph->props.initialstate.c_str());
+
 		/*printvector(graph->spins,graph->props.N);
 		uprintvector(graph->props.U,graph->props.N);
 		uprintvector(graph->props.V,graph->props.N);*/
