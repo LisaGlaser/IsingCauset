@@ -63,7 +63,7 @@ struct Flags {
 
 
 struct Properties {
-	Properties() : flags(Flags()), N(0), sweeps(0), beta(0.0), epsilon(1.0), Jising(0.0), seed(12345L), graphID(0), mrng(MersenneRNG()), filename(""),coldstart(false),printouts(10),spinflips(1) {}
+	Properties() : flags(Flags()), N(0), sweeps(0), beta(0.0), epsilon(1.0), Jising(0.0), seed(12345L), graphID(0), mrng(MersenneRNG()), filename(""),initialstate(""),printouts(10),spinflips(1) {}
 
 	Flags flags;
 
@@ -84,7 +84,7 @@ struct Properties {
 
 	std::string filename;
 
-	bool coldstart;
+	std::string initialstate;
 	int printouts;
 
 
@@ -103,6 +103,14 @@ struct Observables {
 
 	float *action_data;
 	float *Iaction_data;
+	
+	double Magnetisation;
+	double *Magnetisation_data;
+
+	double relcorr;
+	double *relcorr_data;
+
+
 };
 
 struct Graph {

@@ -103,6 +103,31 @@ void initialState(Graph * const graph)
 
 }
 
+
+void IsingObservables(std::vector<int> &spins, Bitvector &adj, const int N, double & relcorr, double &magnetisation)
+{
+  magnetisation=0;
+  relcorr=0;
+  for(int i=0;i<N;i++)
+  {
+   magnetisation+=(double)spins[i];
+   for(int j=0; j<N;j++)
+    {
+
+    if(adj[i].read(j))
+    {
+      relcorr+=spins[i]*spins[j];   /// what I need is spins^T.links.spins
+    }
+
+  }
+
+  }
+  relcorr/=N;
+  magnetisation/=N;
+//  std::cout<<magnetisation<<std::endl;
+//  std::cout<<relcorr<<std::endl;
+}
+
 void randomSpinState(std::vector<int> &spin, MersenneRNG &mrng, const int N)
 {
 	#if UNIT_TEST

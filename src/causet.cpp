@@ -248,6 +248,18 @@ bool init(Graph * const graph, Memory * const mem, CausetPerformance * const cp)
 		graph->obs.Iaction_data = (float*)calloc(graph->props.sweeps, sizeof(float));
 		if (graph->obs.Iaction_data == NULL)
 			throw std::bad_alloc();
+
+		mem->used += sizeof(float) * graph->props.sweeps;
+
+		graph->obs.Magnetisation_data = (double*)calloc(graph->props.sweeps, sizeof(double));
+		if (graph->obs.Magnetisation_data == NULL)
+			throw std::bad_alloc();
+
+		mem->used += sizeof(float) * graph->props.sweeps;
+		graph->obs.relcorr_data = (double*)calloc(graph->props.sweeps, sizeof(double));
+		if (graph->obs.relcorr_data == NULL)
+			throw std::bad_alloc();
+
 		mem->used += sizeof(float) * graph->props.sweeps;
 	} catch (std::bad_alloc) {
 		fprintf(stderr, "Failed to allocate memory in %s at line %d.\n", __FILE__, __LINE__);
@@ -357,6 +369,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 				}
 				graph->obs.action = new_action;
 				graph->obs.Iaction = new_Iaction;
+				IsingObservables(graph->spins, graph->adj, graph->props.N, graph->obs.relcorr, graph->obs.Magnetisation);
 				/*std::cout<<"adjoint"<<std::endl;
 				printmatrix(graph->adj,graph->props.N);
 				std::cout<<"link"<<std::endl;
@@ -379,7 +392,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 
 					///calculate action with changed state
 					IsingAction(graph->spins, new_Iaction, graph->link, graph->props.N, graph->props.Jising);
-
+					IsingObservables(graph->spins, graph->adj, graph->props.N, graph->obs.relcorr, graph->obs.Magnetisation);
 					///accept or reject new state
 					dS = graph->props.beta * (new_Iaction - graph->obs.Iaction);
 					if (dS < 0 || exp(-dS) > graph->props.mrng.urng()){	//Accept change*/
@@ -395,6 +408,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 
 		graph->obs.action_data[s] = graph->obs.action;
 		graph->obs.Iaction_data[s] = graph->obs.Iaction;
+		graph->obs.Magnetisation_data[s]= graph->obs.Magnetisation;
+		graph->obs.relcorr_data[s]= graph->obs.relcorr;
 		for (int i = 0; i < graph->props.N; i++)
 			data << graph->obs.cardinalities[i] << " ";
 		data << "\n";
@@ -444,7 +459,7 @@ bool printGraph(Graph * const graph)
 	if (!os.is_open())
 		return false;
 	for (int i = 0; i < graph->props.sweeps; i++)
-		os << graph->obs.action_data[i] <<" "<<graph->obs.Iaction_data[i] << "\n";
+		os << graph->obs.action_data[i] <<" "<<graph->obs.Iaction_data[i]	<< " " << graph->obs.Magnetisation_data[i]<< " "<< graph->obs.relcorr_data[i]<<"\n";
 	os.flush();
 	os.close();
 
@@ -502,6 +517,14 @@ void destroyGraph(Graph * const graph, size_t &used)
 
 	free(graph->obs.Iaction_data);
 	graph->obs.Iaction_data = NULL;
+	used -= sizeof(float) * graph->props.sweeps;
+
+	free(graph->obs.Magnetisation_data);
+	graph->obs.Magnetisation_data = NULL;
+	used -= sizeof(float) * graph->props.sweeps;
+
+	free(graph->obs.relcorr_data);
+	graph->obs.relcorr_data = NULL;
 	used -= sizeof(float) * graph->props.sweeps;
 
 	return;
