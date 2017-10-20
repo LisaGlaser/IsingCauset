@@ -11,8 +11,8 @@ void randomTotalOrder(std::vector<unsigned int> &U, const int N);
 
 void randomSpinState(std::vector<int> &spin, MersenneRNG &mrng, const int N);
 
-bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, const int N, const double J);
-void IsingObservables(std::vector<int> &spins, Bitvector &link, const int N, double &relcorr, double &magnetisation);
+bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, const int N, const double J,std::vector<unsigned int> &U);
+void IsingObservables(std::vector<int> &spins, Bitvector &link, const int N, double &relcorr, double &magnetisation,std::vector<unsigned int> &U);
 
 bool measureAction_v3(uint64_t * const cardinalities, double &action, Bitvector &adj, Bitvector &workspace, const unsigned int stdim, const int N, const double epsilon);
 

@@ -104,7 +104,7 @@ void initialState(Graph * const graph)
 }
 
 
-void IsingObservables(std::vector<int> &spins, Bitvector &adj, const int N, double & relcorr, double &magnetisation)
+void IsingObservables(std::vector<int> &spins, Bitvector &adj, const int N, double & relcorr, double &magnetisation,std::vector<unsigned int> &U)
 {
   magnetisation=0;
   relcorr=0;
@@ -114,7 +114,7 @@ void IsingObservables(std::vector<int> &spins, Bitvector &adj, const int N, doub
    for(int j=0; j<N;j++)
     {
 
-    if(adj[i].read(j))
+    if(adj[U[i]].read(U[j]))
     {
       relcorr+=spins[i]*spins[j];   /// what I need is spins^T.links.spins
     }
@@ -145,7 +145,7 @@ void randomSpinState(std::vector<int> &spin, MersenneRNG &mrng, const int N)
 
 /// this calculates the ising action
 // algorithm is not optimized, but what gives
-bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, const int N, const double J)
+bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, const int N, const double J,std::vector<unsigned int> &U)
 {
 	#if UNIT_TEST
 	assert (spins.size() > 0);
@@ -157,7 +157,7 @@ bool IsingAction(std::vector<int> &spins, double &Iaction, Bitvector &link, cons
 	for(int i = 0; i < N; i++) {
 		int si = spins[i];
 		for(int j = i + 1; j < N; j++)
-			if(link[i].read(j))
+			if(link[U[i]].read(U[j]))
 				IA += si * spins[j];
 	}
 	Iaction = J * static_cast<double>(IA);

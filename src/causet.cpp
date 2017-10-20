@@ -316,7 +316,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	}
 
 	//Initialize action values
-	if (!measureAction_v3(graph->obs.cardinalities, graph->obs.action, graph->adj, workspace, stdim, graph->props.N, graph->props.epsilon) || (graph->props.Jising && !IsingAction(graph->spins, graph->obs.Iaction, graph->link, graph->props.N, graph->props.Jising)))
+	if (!measureAction_v3(graph->obs.cardinalities, graph->obs.action, graph->adj, workspace, stdim, graph->props.N, graph->props.epsilon) || (graph->props.Jising && !IsingAction(graph->spins, graph->obs.Iaction, graph->link, graph->props.N, graph->props.Jising, graph->props.U)))
 		return false;
 
 	std::ofstream data;
@@ -357,7 +357,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 			updateRelations(graph->new_adj, graph->props.U, graph->props.V, graph->props.N);
 			updateLinks(graph->new_adj, graph->new_link, graph->props.N);
 
-			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon) || (graph->props.Jising && !IsingAction(graph->spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising)))
+			if (!measureAction_v3(graph->obs.cardinalities, new_action, graph->new_adj, workspace, stdim, graph->props.N, graph->props.epsilon) || (graph->props.Jising && !IsingAction(graph->spins, new_Iaction, graph->new_link, graph->props.N, graph->props.Jising, graph->props.U)))
 				return false;
 
 			dS = graph->props.beta * (new_action + new_Iaction - graph->obs.action - graph->obs.Iaction);
@@ -369,7 +369,7 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 				}
 				graph->obs.action = new_action;
 				graph->obs.Iaction = new_Iaction;
-				IsingObservables(graph->spins, graph->adj, graph->props.N, graph->obs.relcorr, graph->obs.Magnetisation);
+				IsingObservables(graph->spins, graph->adj, graph->props.N, graph->obs.relcorr, graph->obs.Magnetisation, graph->props.U);
 				/*std::cout<<"adjoint"<<std::endl;
 				printmatrix(graph->adj,graph->props.N);
 				std::cout<<"link"<<std::endl;
@@ -391,8 +391,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 					graph->spins[q] = -graph->spins[q];
 
 					///calculate action with changed state
-					IsingAction(graph->spins, new_Iaction, graph->link, graph->props.N, graph->props.Jising);
-					IsingObservables(graph->spins, graph->adj, graph->props.N, graph->obs.relcorr, graph->obs.Magnetisation);
+					IsingAction(graph->spins, new_Iaction, graph->link, graph->props.N, graph->props.Jising, graph->props.U);
+					IsingObservables(graph->spins, graph->adj, graph->props.N, graph->obs.relcorr, graph->obs.Magnetisation, graph->props.U);
 					///accept or reject new state
 					dS = graph->props.beta * (new_Iaction - graph->obs.Iaction);
 					if (dS < 0 || exp(-dS) > graph->props.mrng.urng()){	//Accept change*/
