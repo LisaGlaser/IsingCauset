@@ -103,6 +103,72 @@ void initialState(Graph * const graph)
 
 }
 
+void matprod(std::vector<std::vector<int>> &result, const Bitvector &imp, const int N)
+{
+  std::vector<std::vector<int>> prod;
+  prod.resize(N);
+  std::vector<int> zero(N,0);
+
+    for(int j=0;j<N;j++)
+      prod[j]=zero;
+
+    for(int j=0;j<N;j++)
+    {
+
+      /// I need the product of the matrices. The labels actually don't change anything!
+      for(int k=0;k<N;k++)
+      {
+        for(int i=k+1;i<N;i++)
+        {
+        if(imp[k].read(i))
+          {
+            prod[k][j]+=result[i][j];
+          }
+      }
+
+    }
+  }
+
+  result=prod;
+}
+
+void measure_correlators(const std::vector<int> &spins,const Bitvector &link, const int N, double *corr, const std::vector<unsigned int> U)
+{
+
+
+  for(int i=0;i<N;i++) corr[i]=0;
+
+//// here be an efficient way to get the product of all the link matrices. what I want to calculate is
+//// <s^n> = sum_{i,j} s_i s_j L_{i j}^n  /// I guess this means I want a floating point array oh well
+  std::vector<std::vector<int>> prod;
+  std::vector<int> temp;
+  std::vector<int> zero(N,0);
+
+  prod.resize(N);
+  for(int i=0;i<N;i++) /// initializing the product as a unit matrix
+  {
+    temp=zero;
+    temp[i]=1;
+    prod[i]=temp;
+  }
+
+
+
+  for(int i=0;i<N;i++)
+  {
+    matprod(prod,link,N);
+
+    for(int j=0;j<N;j++)
+    {
+      for(int k=j;k<N;k++)
+      {
+      corr[i]+=prod[U[j]][U[k]]*spins[k]*spins[j];
+      }
+    }
+  }
+
+}
+
 
 void IsingObservables(std::vector<int> &spins, Bitvector &adj, const int N, double & relcorr, double &magnetisation,std::vector<unsigned int> &U)
 {

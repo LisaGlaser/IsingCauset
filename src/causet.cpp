@@ -38,7 +38,7 @@ Properties parseArgs(int argc, char **argv)
 
 	int c, longIndex;
 	//Single-character options
-	static const char *optString = ":b:e:j:f:hn:pS:s:v:x:i:q";
+	static const char *optString = ":b:e:j:f:hn:pS:s:v:x:i:cq";
 	//Multi-character options
 	static const struct option longOpts[] = {
 		{ "beta",		required_argument,	NULL, 'b' },
@@ -83,6 +83,9 @@ Properties parseArgs(int argc, char **argv)
 				if (props.N <= 0)
 					throw CausetException("Invalid argument for '--nodes' parameter! ");
 				break;
+			case 'c':	//measure the correlator
+			props.flags.corr = true;
+			break;
 			case 'p':	//Print simulation results to file
 				props.flags.print = true;
 				break;
@@ -133,6 +136,7 @@ Properties parseArgs(int argc, char **argv)
 				printf("  -n, --nodes\t\tNumber of nodes\t\t\t100\n");
 				printf("  -p, --print\t\tPrint results to file\n");
 				printf("      --print-edges\tPrint edge list to file\n");
+				printf("  -c, --corr\t\tCalculate correlators and print to file\n");
 				printf("  -s, --seed\t\tRandom seed\t\t\t18100\n");
 				printf("  -S, --sweeps\t\tNumber of sweeps\t\t1000\n");
 				printf("	-i, --initial\t\t starts from cold state\n");
@@ -290,8 +294,10 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	double dS = 0.0;
 	int accepted=0;
 	int acceptedI=0;
+	double *corrar;
+	corrar= (double*)calloc(graph->props.N, sizeof(double));
 
-	/// ugly hack but I can just fix how often I want the states printed Out-Degrees
+	mem->used += sizeof(double )* graph->props.N; // memory for the correlators
 
 	graph->obs.Iaction=0;
 
@@ -331,6 +337,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	myfile.open("dat/CSwSpinstate.dat");
 	if (!data.is_open())
 		return false;
+	std::ofstream myfile2;
+	myfile2.open("dat/Correlators.dat");
 	for (int s = 0; s < graph->props.sweeps; s++) {
 
 		for (uint64_t k = 0; k < npairs; k++) {
@@ -410,9 +418,17 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 		graph->obs.Iaction_data[s] = graph->obs.Iaction;
 		graph->obs.Magnetisation_data[s]= graph->obs.Magnetisation;
 		graph->obs.relcorr_data[s]= graph->obs.relcorr;
+
 		for (int i = 0; i < graph->props.N; i++)
 			data << graph->obs.cardinalities[i] << " ";
 		data << "\n";
+
+		if(graph->props.flags.corr){
+			measure_correlators(graph->spins, graph->link, graph->props.N, corrar, graph->props.U);
+			for(int i=0; i<graph->props.N; i++) myfile2<<corrar[i]<<" ";
+			myfile2<<"\n";
+			}
+
 
 		//printf("sweep [%d] action: %f\n", s, graph->obs.action);
 		if(graph->props.printouts!=0&&!(s%(graph->props.sweeps/graph->props.printouts))) {
@@ -429,8 +445,10 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	data.close();
 
 	//Free Workspace
-	mem->used -= sizeof(BlockType) * clone_length * omp_get_max_threads();
+	free(corrar);
+	mem->used -= sizeof(double )* graph->props.N; // free from the correlator
 
+	mem->used -= sizeof(BlockType) * clone_length * omp_get_max_threads();
 	workspace.clear();
 	workspace.swap(workspace);
 	double fspinflips=(float)graph->props.spinflips;
@@ -440,7 +458,8 @@ bool evolve(Graph * const graph, Memory * const mem, CausetPerformance * const c
 	printf("\tWe accepted %d causet moves of %lu attempted moves\n",accepted,graph->props.sweeps*npairs);
 	printf("\tWe accepted %d ising moves of %0.0f attempted moves\n",acceptedI,(graph->props.sweeps)*(fspinflips));
 	fflush(stdout);
-
+	myfile.close();
+	myfile2.close();
 	return true;
 }
 

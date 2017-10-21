@@ -52,10 +52,12 @@ struct Memory {
 };
 
 struct Flags {
-	Flags() : print(false), print_edges(false), verbose(false), bench(false) {}
+	Flags() : print(false), print_edges(false),corr(false), verbose(false), bench(false) {}
 
 	bool print;
 	bool print_edges;
+
+	bool corr;
 
 	bool verbose;
 	bool bench;
@@ -103,7 +105,7 @@ struct Observables {
 
 	float *action_data;
 	float *Iaction_data;
-	
+
 	double Magnetisation;
 	double *Magnetisation_data;
 
