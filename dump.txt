@@ -1,0 +1,22 @@
+[Evolution_gravity] starting...
+
+> Using Processor:  Intel(R) Core(TM) i7-6500U CPU @ 2.50GHz
+
+	[ *** OPENMP MODULE ACTIVE *** ]
+
+	[ ***  AVX2 MODULE ACTIVE  *** ]
+
+Initializing Network...
+	Task Completed.
+Evolving Network...
+Spinflips per sweep 50 
+	Task Completed.
+	We accepted 5793 causet moves of 1387500 attempted moves
+	We accepted 24 ising moves of 25000 attempted moves
+Printing data to file.
+[Evolution_gravity] results...
+PASSED
+
+Time: 137.957627 sec
+PROGRAM COMPLETED
+

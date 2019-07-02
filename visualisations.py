@@ -34,6 +34,7 @@ for i in range(len(s)):
     plt.scatter(u[i],v[i],c=s[i],s=100)
     plt.show()
 
+len(s)
 #%%
 plt.plot(action[0:,0])
 plt.plot(action[0:,1])

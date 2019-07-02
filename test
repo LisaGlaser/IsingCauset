@@ -6,4 +6,4 @@
 # Northeastern University #
 ###########################
 
-./bin/Evolution_$HOSTNAME --nodes 25 --sweeps 100 --beta 0.5 --epsilon 0.21 --j -10.0 --print -x 10 --spinflips 10
+./bin/Evolution_$HOSTNAME --nodes 40 --sweeps 50000 --beta 1.5 --epsilon 0.21 --j 0 --print -x 40 -i random -c 
