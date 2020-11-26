@@ -1,9 +1,10 @@
 #!/bin/bash
 
 ###########################
-#(C) Will Cunningham 2016 #
-#         DK Lab          #
-# Northeastern University #
+# Lisa Glaser 2020        #
 ###########################
 
-./bin/Evolution_$HOSTNAME --nodes 40 --sweeps 50000 --beta 1.5 --epsilon 0.21 --j 0 --print -x 40 -i random -c 
+# this will run a little example with 40 elements and spincoupling -1 at beta=1.5
+# explanations of the parameters can be surmised from causet.cpp
+
+./bin/Evolution_$HOSTNAME --nodes 40 --sweeps 50000 --beta 1.5 --epsilon 0.21 --j -1 --print -x 40 -i random --spinflips 40 -c -x
